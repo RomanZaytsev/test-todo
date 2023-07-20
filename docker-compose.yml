@@ -1,0 +1,39 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Nginx.Dockerfile
+    ports:
+      -  8081:80
+    links:
+      - fpm
+    volumes:
+      - .:/var/www/todo-php
+      - ./docker/logs/nginx:/var/log/nginx
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/Fpm.Dockerfile
+    links:
+      - mysql
+    volumes:
+      - .:/var/www/todo-php
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 'OK';"]
+      interval: 5s
+      retries: 5
+      timeout: 5s
+  mysql:
+    image: mysql:8.0
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    volumes:
+        - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    ports:
+      - 33061:3306
+    environment:
+        - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: mysqladmin ping --silent
+      interval: 5s
+      retries: 20
+      timeout: 5s
