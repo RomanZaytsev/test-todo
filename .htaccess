@@ -1,0 +1,5 @@
+DirectoryIndex index.php
+RewriteEngine On
+#RewriteRule ^([^/\.]+)/?$ /index.php?section=$1
+RewriteRule (\w*)/(\w*)($|\/$) /index.php?controller=$1&action=$2 [L]
+#RewriteRule ^(([^/]+/)*[^.]+)$ /$1.php [L]

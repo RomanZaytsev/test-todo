@@ -1,0 +1,4 @@
+.ftpconfig
+.idea
+vendor
+docker/logs

@@ -1,0 +1,8 @@
+
+.actionBar .search.form-group {
+    display: none;
+}
+
+.pagination .button {
+    cursor: pointer;
+}

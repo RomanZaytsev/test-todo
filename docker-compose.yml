@@ -1,0 +1,37 @@
+version: "3.3"
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Nginx.Dockerfile
+    ports:
+      -  80:80
+      -  443:443
+    links:
+      - fpm
+    volumes:
+      - .:/var/www/test-todo
+      - ./docker/logs/nginx:/var/log/nginx
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/Fpm.Dockerfile
+    links:
+      - mysql
+    volumes:
+      - .:/var/www/test-todo
+  mysql:
+    image: mysql:5.7
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+        - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    ports:
+      - 33060:3306
+    environment:
+        - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: mysqladmin ping --silent
+      interval: 5s
+      retries: 20
+      timeout: 5s
