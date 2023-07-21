@@ -99,6 +99,7 @@ class UserController extends Controller
             $result = $model->login($params);
         } else {
             $result['validate'] = $validate;
+            $result['status'] = 'Все поля обязательны для заполнения';
         }
 
         if (isset($result['http_response_code'])) {
