@@ -20,12 +20,12 @@ class Session
         $row = $queryResult->fetch_object();
         $queryResult->close();
         if (!$row) {
-            $result['status'] = "Неверный логин";
+            $result['status'] = "Неверный логин или пароль";
             $result['http_response_code'] = "200";
             return $result;
         }
         if ($row->hash !== $params['hash']) {
-            $result['status'] = "Неверный пароль";
+            $result['status'] = "Неверный пароль или пароль";
             return $result;
         }
 
