@@ -30,9 +30,11 @@ class Tasks
             $query .= " OFFSET " . $mysqli->real_escape_string($condition['offset']);
         }
         $queryResult = $mysqli->query($query);
-        while ($row = $queryResult->fetch_object()) {
-            $result[] = $row;
-        };
+        if($queryResult) {
+            while ($row = $queryResult->fetch_object()) {
+                $result[] = $row;
+            };
+        }
         return $result;
     }
 
@@ -42,9 +44,11 @@ class Tasks
         $result = null;
         $query = "SELECT * FROM tasks WHERE id=" . intval($id);
         $queryResult = $mysqli->query($query);
-        while ($row = $queryResult->fetch_object()) {
-            return $row;
-        };
+        if($queryResult) {
+            while ($row = $queryResult->fetch_object()) {
+                return $row;
+            };
+        }
         return $result;
     }
 
