@@ -17,8 +17,8 @@
                     <th data-column-id="username">имя пользователя</th>
                     <th data-column-id="email">email</th>
                     <th data-column-id="text">текст задачи</th>
-                    <th data-column-id="done" data-formatter="status">status</th>
-                    <th data-column-id="commands" data-formatter="commands" data-sortable="false">Commands</th>
+                    <th data-column-id="done" data-formatter="status">статус</th>
+                    <th data-column-id="commands" data-formatter="commands" data-sortable="false">Команды</th>
                 </tr>
                 </thead>
             </table>
@@ -153,8 +153,11 @@
                     url: "?controller=task&action=list",
                     formatters: {
                         "commands": function (column, row) {
-                            return "<button type=\"button\" class=\"btn btn-xs btn-default command-edit\" data-row-id=\"" + row.id + "\"><span class=\"glyphicon glyphicon-edit\"></span></button> " +
-                                "<button type=\"button\" class=\"btn btn-xs btn-default command-delete\" data-row-id=\"" + row.id + "\"><span class=\"glyphicon glyphicon-trash\"></span></button>";
+                            var buttons = "<button type=\"button\" class=\"btn btn-xs btn-default command-edit\" data-row-id=\"" + row.id + "\"><span class=\"glyphicon glyphicon-edit\"></span></button>";
+                            <?php if (@$user->name == "admin"): ?>
+                            buttons +="<button type=\"button\" class=\"btn btn-xs btn-default command-delete\" data-row-id=\"" + row.id + "\"><span class=\"glyphicon glyphicon-trash\"></span></button>";
+                            <?php endif; ?>
+                            return buttons;
                         },
                         "status": function (column, row) {
                             griddata[row.id] = row;
