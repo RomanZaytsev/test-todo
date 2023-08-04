@@ -76,7 +76,7 @@ class UserController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function authorization()
@@ -105,7 +105,7 @@ class UserController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function authorizationLogout()
@@ -116,7 +116,7 @@ class UserController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 }
 

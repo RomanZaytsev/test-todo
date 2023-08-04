@@ -31,7 +31,7 @@ class TaskController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function update()
@@ -67,7 +67,7 @@ class TaskController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function delete()
@@ -94,7 +94,7 @@ class TaskController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function accept()
@@ -103,7 +103,7 @@ class TaskController extends Controller
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 
     public function list()
@@ -129,7 +129,7 @@ class TaskController extends Controller
             'rows' => $rows,
             'total' => intval($total),
         ];
-        echo json_encode($result);
+        $this->renderJSON($result);
     }
 }
 

@@ -15,6 +15,12 @@ class Controller
         $_content = ob_get_clean();
         include $main_template;
     }
+
+    public function renderJSON($data)
+    {
+        header("Content-type: application/json; charset=utf-8");
+        echo json_encode($data);
+    }
 }
 
 ?>
