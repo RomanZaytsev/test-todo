@@ -11,8 +11,7 @@ error_reporting(E_ALL);
 
 $URI = explode('?', $_SERVER['REQUEST_URI']);
 $URI_PATH = explode('/', ltrim($URI[0], '/')) ?? [];
-$url = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-$url .= '/index.php';
+$url = 'index.php';
 $baseUrl = $url;
 if(!empty($URI[1])) {
     $url .= '?' . $URI[1];

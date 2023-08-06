@@ -36,8 +36,9 @@ function ajaxFormSubmit(e) {
     setTimeout(function () {
         self.inprocess = false;
     }, 1000);
+    var url = form.dataset.ajaxaction ? form.dataset.ajaxaction : (form.action.length > 0 ? form.action : window.location.href);
     var set = {
-        url: form.dataset.ajaxaction ? window.location.protocol + "//" + window.location.host + form.dataset.ajaxaction : (form.action.length > 0 ? form.action : window.location.href),
+        url: url,
         data: formdata,
         processData: false,
         contentType: false,
