@@ -24,3 +24,6 @@ make build
 make up
 make composer.install
 ```
+
+### Онлайн-демонстрация
+[http://54.36.162.201/portfolio/test-todo](http://54.36.162.201/portfolio/test-todo)
