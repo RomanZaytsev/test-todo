@@ -28,5 +28,8 @@ backup:
 composer.install:
 	@docker-compose exec fpm su root -c "composer install --optimize-autoloader;"
 
+composer.update:
+	@docker-compose exec fpm su root -c "composer update --optimize-autoloader;"
+
 test:
 	@./docker/tests/run-tests.sh

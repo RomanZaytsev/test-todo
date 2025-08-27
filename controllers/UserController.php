@@ -3,7 +3,6 @@
 namespace app\controllers;
 
 use app\models\Session;
-use app\models\Tasks;
 use app\models\User;
 
 class UserController extends Controller

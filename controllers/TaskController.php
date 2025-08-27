@@ -2,7 +2,7 @@
 
 namespace app\controllers;
 
-use app\models\Tasks;
+use app\models\Task;
 use app\models\User;
 
 class TaskController extends Controller
@@ -24,7 +24,7 @@ class TaskController extends Controller
             }
         }
         if (empty($errors)) {
-            $result = Tasks::post($params);
+            $result = Task::post($params);
         } else {
             $result['validate'] = $validate;
         }
@@ -49,8 +49,11 @@ class TaskController extends Controller
                 'username' => empty(@$_POST['username']) ? "не заполнено" : true,
                 'email' => empty(@$_POST['email']) ? "не заполнено" : ((!filter_var(@$_POST['email'], FILTER_VALIDATE_EMAIL)) ? "email не валиден" : true),
                 'text' => empty(@$_POST['text']) ? "не заполнено" : true,
-                'done' => !is_numeric($_POST['id'] ?? false) ? 'Неправильный формат ID.' : true,
             ];
+            // Проверяем поле 'done' только если оно передано
+            if (isset($_POST['done'])) {
+                $validate['done'] = !is_numeric($_POST['done'] ?? false) ? 'Неправильный формат done.' : true;
+            }
             foreach ($validate as $key => $value) {
                 if ($value !== true) {
                     $errors[$key] = $value;
@@ -59,7 +62,7 @@ class TaskController extends Controller
                 }
             }
             if (empty($errors)) {
-                $result = Tasks::update($params);
+                $result = Task::update($params);
             } else {
                 $result['validate'] = $validate;
             }
@@ -80,13 +83,17 @@ class TaskController extends Controller
         } else {
             $params = [];
             $errors = [];
-            if (!is_numeric($_POST['id'] ?? false)) {
-                $errors[] = 'Неправильный формат ID.\n';
+            $id = $_POST['id'] ?? '';
+
+            // Проверяем, что ID не пустой и не равен "undefined"
+            if (empty($id) || $id === 'undefined' || !is_numeric($id)) {
+                $errors[] = 'Неправильный формат ID.';
             } else {
-                $params['id'] = $_POST['id'];
+                $params['id'] = (int)$id;
             }
+
             if (empty($errors)) {
-                $result = Tasks::delete($params);
+                $result = Task::delete($params);
             } else {
                 $result['status'] = implode('; ', $errors);
             }
@@ -99,7 +106,7 @@ class TaskController extends Controller
 
     public function accept()
     {
-        $result = Tasks::update($_POST);
+        $result = Task::update($_POST);
         if (isset($result['http_response_code'])) {
             http_response_code($result['http_response_code']);
         }
@@ -110,18 +117,18 @@ class TaskController extends Controller
     {
         $current = @$_POST['current'] ? $_POST['current'] : 1;
         $rowCount = @$_POST['rowCount'] ? $_POST['rowCount'] : 3;
-        $total = Tasks::getAll(["select" => "count(*) count"])[0]->count;
+        $total = Task::getAll(["select" => "count(*) count"])[0]['count'];
         $totalPages = max(1, ceil($total / $rowCount));
         if ($current > $totalPages) {
             $current = $totalPages;
         }
         $condition = $rowCount > 0 ? ['limit' => $rowCount, 'offset' => ($current - 1) * $rowCount] : [];
         $condition['sort'] = @$_POST['sort'];
-        $rows = Tasks::getAll($condition);
+        $rows = Task::getAll($condition);
         if (@$_POST['id'] == "bootgrid") {
-            foreach ($rows as $row) {
+            foreach ($rows as &$row) {
                 foreach ($row as $key => $value) {
-                    $row->$key = htmlentities($value ?? '');
+                    $row[$key] = htmlentities($value ?? '');
                 }
             }
         }

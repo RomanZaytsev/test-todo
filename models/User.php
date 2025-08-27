@@ -2,64 +2,179 @@
 
 namespace app\models;
 
-use app\configs\DB;
-use app\helpers\Utilities;
+use Doctrine\ORM\Mapping as ORM;
+use app\configs\Doctrine;
+use app\models\Session;
 use app\helpers\PasswordHasher;
+use Doctrine\ORM\EntityManager;
 
+/**
+ * @ORM\Entity
+ * @ORM\Table(name="user")
+ */
 class User
 {
     public static $currentUser;
-    public $id;
-    public $name;
-    public $email;
-    public $hash;
+
+    /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
+     */
+    private $id;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $name;
+
+    /**
+     * @ORM\Column(type="string", length=255, unique=true)
+     */
+    private $email;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $hash;
+
+    // Getters and setters
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function setName($name)
+    {
+        $this->name = $name;
+        $this->name = $name; // Update both private and public properties
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->email = $email; // Update both private and public properties
+    }
+
+    public function getHash()
+    {
+        return $this->hash;
+    }
+
+    public function setHash($hash)
+    {
+        $this->hash = $hash;
+        $this->hash = $hash; // Update both private and public properties
+    }
+
+    // Public getters for backward compatibility
+    public function __get($property)
+    {
+        switch ($property) {
+            case 'id':
+                return $this->getId();
+            case 'name':
+                return $this->getName();
+            case 'email':
+                return $this->getEmail();
+            case 'hash':
+                return $this->getHash();
+            default:
+                return null;
+        }
+    }
+
+    // Public setters for backward compatibility
+    public function __set($property, $value)
+    {
+        switch ($property) {
+            case 'id':
+                // ID is auto-generated, don't allow setting
+                break;
+            case 'name':
+                $this->setName($value);
+                break;
+            case 'email':
+                $this->setEmail($value);
+                break;
+            case 'hash':
+                $this->setHash($value);
+                break;
+        }
+    }
+
+    private static function getEntityManager(): EntityManager
+    {
+        return Doctrine::getEntityManager();
+    }
 
     public function create($params)
     {
-        $mysqli = DB::connector();
+        $em = self::getEntityManager();
 
-        if (Utilities::sql_exist($mysqli, "SELECT * FROM user WHERE email='" . $mysqli->real_escape_string($params['email']) . "'")) {
-            $result['status'] = "E-mail busy";
-            return $result;
+        try {
+            // Проверяем, существует ли пользователь с таким email
+            $existingUser = $em->getRepository(self::class)->findOneBy(['email' => $params['email']]);
+            if ($existingUser) {
+                return ['status' => 'E-mail busy'];
+            }
+
+            $user = new self();
+            $user->setName($params['name']);
+            $user->setEmail($params['email']);
+            $user->setHash(PasswordHasher::hash($params['password']));
+
+            $em->persist($user);
+            $em->flush();
+
+            return [
+                'id' => $user->getId(),
+                'status' => 'Created',
+                'query' => 'INSERT via Doctrine ORM'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'Ошибка при создании учётной записи: ' . $e->getMessage(),
+                'query' => 'INSERT via Doctrine ORM'
+            ];
         }
-        $query = "INSERT INTO user(name,email,hash)
-    							VALUES('" . $mysqli->real_escape_string($params['name']) . "',
-										'" . $mysqli->real_escape_string($params['email']) . "',
-	 									'" . $mysqli->real_escape_string(PasswordHasher::hash($params['password'])) . "')";
-        $result['query'] = $query;
-        if ($mysqli->query($query)) {
-            $result['id'] = $mysqli->insert_id;
-            $result['status'] = "Created";
-        } else {
-            $result['status'] = "Ошибка при создании учётной записи: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
-        }
-        return $result;
     }
 
     public function getuser($params)
     {
-        $mysqli = DB::connector();
-        $result = [];
-        if ($params['id']) {
-            $query = "SELECT * FROM user WHERE id='" . intval($params['id']) . "'";
-        } else {
-            if ($params['email']) {
-                $query = "SELECT * FROM user WHERE email='" . $mysqli->real_escape_string($params['email']) . "'";
-            } else {
-                return $result;
-            }
-        }
+        $em = self::getEntityManager();
 
-        $queryResult = $mysqli->query($query);
-        $row = $queryResult->fetch_object();
-        $queryResult->close();
-        if (!$row) {
-            $result['status'] = "User was not found";
-        } else {
-            $result['profile'] = $row;
-            $result['status'] = "OK";
+        try {
+            $user = null;
+            if (isset($params['id'])) {
+                $user = $em->find(self::class, (int)$params['id']);
+            } elseif (isset($params['email'])) {
+                $user = $em->getRepository(self::class)->findOneBy(['email' => $params['email']]);
+            }
+
+            if (!$user) {
+                return ['status' => 'User was not found'];
+            }
+
+            return [
+                'profile' => $user,
+                'status' => 'OK'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'Ошибка при получении пользователя: ' . $e->getMessage()
+            ];
         }
-        return $result;
     }
 
     /**
@@ -76,31 +191,25 @@ class User
         if (self::$currentUser) {
             $result = self::$currentUser;
         } else {
-            $mysqli = DB::connector();
+            $em = self::getEntityManager();
             $cookie = $_COOKIE;
-            if (@$cookie['id'] != null and @$cookie['hash'] != null) {
-                $id = $cookie['id'];
-                $hash = $cookie['hash'];
-                $query = "
-					SELECT
-					a.*,b.name,b.email
-					FROM session a
-					JOIN user b
-					ON a.user_id = b.id
-					WHERE
-						a.id = " . intval($id) . "
-					AND
-						a.hash = '" . $mysqli->real_escape_string($hash) . "'";
-                $queryResult = $mysqli->query($query);
-                $row = $queryResult->fetch_object();
-                $queryResult->close();
-                if ($row) {
-                    $result = new User();
-                    $result->id = $row->id;
-                    $result->name = $row->name;
-                    $result->email = $row->email;
-                    $result->hash = $row->hash;
-                    self::$currentUser = $result;
+
+            if (isset($cookie['id']) && isset($cookie['hash'])) {
+                try {
+                    $session = $em->find(Session::class, (int)$cookie['id']);
+                    if ($session && $session->getHash() === $cookie['hash']) {
+                        $user = $session->getUser();
+                        if ($user) {
+                            // Ensure user is fully loaded (not a proxy)
+                            if ($user instanceof \Doctrine\ORM\Proxy\Proxy) {
+                                $em->refresh($user);
+                            }
+                            self::$currentUser = $user;
+                            $result = $user;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Игнорируем ошибки, возвращаем null
                 }
             }
         }
